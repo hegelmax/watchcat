@@ -7,7 +7,7 @@ Compilation:
 
 Using example:
 > watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat"
-    C:\LEMEX\Watcher\watchcat_v1.3.exe -p="D:\ZoneData_Import\final" -w -c -s -l -f:"*.csv" -r="C:\LEMEX\run_SQL_job\run_SQL_job.bat" -a="/changes:"
+> C:\LEMEX\Watcher\watchcat_v1.3.exe -p="D:\ZoneData_Import\final" -w -c -s -l -f:"*.csv" -r="C:\LEMEX\run_SQL_job\run_SQL_job.bat" -a="/changes:"
     
 ```
     Available options:
