@@ -1,12 +1,15 @@
 # WatchCat
 
+Сommand line application for tracking filesystem changes
+
 Compilation:
-    C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:exe /out:C:\LEMEX\Watcher\watchcat_v1.3.exe C:\LEMEX\Watcher\watchcat_v1.3.cs /win32icon:C:\LEMEX\Watcher\eyes-on-speaker.ico /reference:C:\LEMEX\Watcher\Newtonsoft.Json.dll
+> C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:exe /out:C:\LEMEX\Watcher\watchcat_v1.3.exe C:\LEMEX\Watcher\watchcat_v1.3.cs /win32icon:C:\LEMEX\Watcher\eyes-on-speaker.ico /reference:C:\LEMEX\Watcher\Newtonsoft.Json.dll
 
 Using example:
-    watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat"
+> watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat"
     C:\LEMEX\Watcher\watchcat_v1.3.exe -p="D:\ZoneData_Import\final" -w -c -s -l -f:"*.csv" -r="C:\LEMEX\run_SQL_job\run_SQL_job.bat" -a="/changes:"
     
+```
     Available options:
       -h -help      - show this info
       -s -subfolder - scan all subfolders
@@ -30,3 +33,4 @@ Using example:
     Params can be set in two ways:
       -e=CUDR    - with sign =
       -e:CUDR    - with sign :
+```
