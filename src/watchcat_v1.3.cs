@@ -1,6 +1,6 @@
 /*
 Compilation:
-	C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:exe /out:C:\LEMEX\Watcher\watchcat_v1.3.exe C:\LEMEX\Watcher\watchcat_v1.3.cs /win32icon:C:\LEMEX\Watcher\eyes-on-speaker.ico /reference:C:\LEMEX\Watcher\Newtonsoft.Json.dll
+	C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:exe /out:C:\LEMEX\Watcher\watchcat_v1.3.1.exe C:\LEMEX\Watcher\watchcat_v1.3.cs /win32icon:C:\LEMEX\Watcher\eyes-on-speaker.ico /reference:C:\LEMEX\Watcher\Newtonsoft.Json.dll
 
 Using example:
 	watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat"
@@ -15,12 +15,13 @@ Using example:
 	  -w -wait		- wait for exit when running program
 
 	Available params:
-	  -p -path		="C:\Windows"						- Path for watching
-	  -f -filter	="*.scv"							- Watch only this type of files
-	  -l -logfile	="C:\Full path To\Log_file.log"		- Save all info in log file (Param is path to log file. If param is empty, then log file creates in same folder)
-	  -e -events	=CUDR								- Set types of events, that should be handled (C - Created, U - Updated, D - Deleted, R - Renamed)
-	  -r -runfile	="C:\Full path To\Your Script.exe"	- Path to file (execute a program, vb script or batch file), that need to be executed on event
-	  -a -argument	="/changes:"						- Send info about event to program, vb script or batch with specified prefix (if param is set, but empty, send without prefix)
+	  -p  -path		="C:\Windows"						- Path for watching
+	  -f  -filter	="*.scv"							- Watch only this type of files
+	  -l  -logfile	="C:\Full path To\Log_file.log"		- Save all info in log file (Param is path to log file. If param is empty, then log file creates in same folder)
+	  -e  -events	=CUDR								- Set types of events, that should be handled (C - Created, U - Updated, D - Deleted, R - Renamed)
+	  -r  -runfile	="C:\Full path To\Your Script.exe"	- Path to file (execute a program, vb script or batch file), that need to be executed on event
+	  -a  -argument	="/changes:"						- Send info about event to program, vb script or batch with specified prefix (if param is set, but empty, send without prefix)
+	  -sp -spinner	=3									- Spinner type on standby (available options 1-4)
 	  
 	Keys can be called in two ways:
 	  -h -help	- with sign -
@@ -44,7 +45,7 @@ using System.Threading;
 using Newtonsoft.Json;
 //using System.Web.Script.Serialization;
 
-[assembly:AssemblyVersionAttribute("1.3")]
+[assembly:AssemblyVersionAttribute("1.3.1")]
 [assembly:AssemblyCompanyAttribute("LEMEX")]
 [assembly:AssemblyCopyrightAttribute("Maxim Hegel")]
 [assembly:AssemblyProductAttribute("WatchCat")]
@@ -70,6 +71,8 @@ namespace LEMEX {
 	}
 	
 	public class WatchCatInputParams {
+		public int			spinner_type_id	= 0;
+		
 		public bool			help			= false;
 		public bool			debug			= false;
 		public bool			scan_subfolder	= false;
@@ -272,6 +275,13 @@ namespace LEMEX {
 			if (arguments.ContainsKey("-argument"))	arguments.TryGetValue("-argument",	out _wcip.argument);
 			if (arguments.ContainsKey("/argument"))	arguments.TryGetValue("/argument",	out _wcip.argument);
 			
+			string tempSpinnerValue = "";
+			if (arguments.ContainsKey("-sp"))		arguments.TryGetValue("-sp",		out tempSpinnerValue);
+			if (arguments.ContainsKey("/sp"))		arguments.TryGetValue("/sp",		out tempSpinnerValue);
+			if (arguments.ContainsKey("-spinner"))	arguments.TryGetValue("-spinner",	out tempSpinnerValue);
+			if (arguments.ContainsKey("/spinner"))	arguments.TryGetValue("/spinner",	out tempSpinnerValue);
+			Int32.TryParse(tempSpinnerValue, out _wcip.spinner_type_id);
+			
 		// set Log FileName
 			string log_file_directory;
 			string log_file_name;
@@ -368,6 +378,7 @@ namespace LEMEX {
 				Console.WriteLine("Run FileName: {0}",		_wcip.run_file_path);
 				Console.WriteLine("Events List: {0}",		_wcip.events);
 				Console.WriteLine("Argument: {0}",			_wcip.argument);
+				Console.WriteLine("Spinner Type: {0}",		_wcip.spinner_type_id);
 				
 				foreach (KeyValuePair<string, string> argument in arguments) {
 					//Console.WriteLine("Key: {0}, Value: {1}", argument.Key, argument.Value);
@@ -429,6 +440,7 @@ namespace LEMEX {
 		}
 		
 		private void Watch() {
+			string spinner = "";
 			ShowConsole("WatchCat is RUNNING! Press \"q\" to quit the watcher", console_colors.Green);
 			WriteLog(getNow() + "; WatchCat is RUNNING!");
 			
@@ -443,11 +455,97 @@ namespace LEMEX {
 			},null);
 			
 			while (1==1) {
-				ConsoleShowWaitTime();
-				Thread.Sleep(1000);
+				spinner = getSpinner(spinner, _wcip.spinner_type_id);
+				ConsoleShowWaitTime("[" + spinner + "] Standby");
+				Thread.Sleep(100);
 				if (amtRead > 0) break;
 			}
 			WriteLog(getNow() + "; User quit the program");
+		}
+		
+		private string getSpinner(string spinner = "", int spinnerTypeId = 1){
+			string spinnerType = "";
+			switch (spinnerTypeId) {
+				case 2:
+					spinnerType = "*";
+					break;
+				case 3:
+					spinnerType = ">>";
+					break;
+				case 4:
+					spinnerType = ">><<";
+					break;
+				default:
+					spinnerType = "-|";
+					break;
+			}
+			
+			switch (spinnerType) {
+				case "-|":
+					spinner =
+						(spinner == ""	? "-" :
+						(spinner == "-"	? "\\" :
+						(spinner == "\\"	? "|" :
+						(spinner == "|"	? "/" :
+						(spinner == "/"	? "-" :
+						"")))));
+					break;
+				case "*":
+					spinner =
+						(spinner == ""	? "*----" :
+						(spinner == "*----"	? "-*---" :
+						(spinner == "-*---"	? "--*--" :
+						(spinner == "--*--"	? "---*-" :
+						(spinner == "---*-"	? "----*" :
+						(spinner == "----*"	? "*----" :
+						""))))));
+					break;
+				case ">>":
+					spinner =
+						(spinner == ""			? "---------" :
+						(spinner == "---------"	? ">--------" :
+						(spinner == ">--------"	? ">>-------" :
+						(spinner == ">>-------"	? "->>------" :
+						(spinner == "->>------"	? "-->>-----" :
+						(spinner == "-->>-----"	? "--->>----" :
+						(spinner == "--->>----"	? "---->>---" :
+						(spinner == "---->>---"	? "----->>--" :
+						(spinner == "----->>--"	? "------>>-" :
+						(spinner == "------>>-"	? "------->>" :
+						(spinner == "------->>"	? "-------->" :
+						(spinner == "-------->"	? "---------" :
+						""))))))))))));
+					break;
+				case ">><<":
+					spinner =
+						(spinner == ""			? "---------" :
+						(spinner == "---------"	? ">--------" :
+						(spinner == ">--------"	? ">>-------" :
+						(spinner == ">>-------"	? "->>------" :
+						(spinner == "->>------"	? "-->>-----" :
+						(spinner == "-->>-----"	? "--->>----" :
+						(spinner == "--->>----"	? "---->>---" :
+						(spinner == "---->>---"	? "----->>--" :
+						(spinner == "----->>--"	? "------>>-" :
+						(spinner == "------>>-"	? "------->>" :
+						(spinner == "------->>"	? "-------->" :
+						(spinner == "-------->"	? "--------|" :
+						(spinner == "--------|"	? "--------<" :
+						(spinner == "--------<"	? "-------<<" :
+						(spinner == "-------<<"	? "------<<-" :
+						(spinner == "------<<-"	? "-----<<--" :
+						(spinner == "-----<<--"	? "----<<---" :
+						(spinner == "----<<---"	? "---<<----" :
+						(spinner == "---<<----"	? "--<<-----" :
+						(spinner == "--<<-----"	? "-<<------" :
+						(spinner == "-<<------"	? "<<-------" :
+						(spinner == "<<-------"	? "<--------" :
+						(spinner == "<--------"	? "|--------" :
+						(spinner == "|--------"	? ">--------" :
+						""))))))))))))))))))))))));
+					break;
+			}
+			return spinner;
 		}
 		
 		private void ConsoleShowWaitTime(string wait_type = "Standby") {
@@ -717,33 +815,37 @@ namespace LEMEX {
 			
 			ShowConsole("");
 			ShowConsole("Available options:", console_colors.Magenta);
-			ShowConsole("  -h -help	- show this info");
-			ShowConsole("  -s -subfolder	- scan all subfolders");
-			ShowConsole("  -d -debug	- debug function");
-			ShowConsole("  -c -console	- show changes in console");
-			ShowConsole("  -w -wait	- wait for exit when running program");
+			ShowConsole("  -h  -help	- show this info");
+			ShowConsole("  -s  -subfolder	- scan all subfolders");
+			ShowConsole("  -d  -debug	- debug function");
+			ShowConsole("  -c  -console	- show changes in console");
+			ShowConsole("  -w  -wait	- wait for exit when running program");
 			ShowConsole("");
 			ShowConsole("");
 			ShowConsole("Available params:", console_colors.Green);
-			ShowConsole("  -p -path", console_colors.White);
-			ShowConsole("      Path for watching", console_colors.Gray);
-			ShowConsole("     -path=\"C:\\Windows\"", console_colors.DarkGray);
+			ShowConsole("  -p  -path", console_colors.White);
+			ShowConsole("       Path for watching", console_colors.Gray);
+			ShowConsole("      -path=\"C:\\Windows\"", console_colors.DarkGray);
 			ShowConsole("");
-			ShowConsole("  -f -filter", console_colors.White);
-			ShowConsole("      Watch only this type of files", console_colors.Gray);
-			ShowConsole("     -filter=\"*.scv\"", console_colors.DarkGray);
+			ShowConsole("  -f  -filter", console_colors.White);
+			ShowConsole("       Watch only this type of files", console_colors.Gray);
+			ShowConsole("      -filter=\"*.scv\"", console_colors.DarkGray);
 			ShowConsole("");
-			ShowConsole("  -l -logfile", console_colors.White);
-			ShowConsole("      Save all info in log file (Param is path to log file. If param is empty, then log file creates in same folder)", console_colors.Gray);
-			ShowConsole("     -logfile=\"C:\\Full path To\\Log_file.log\"", console_colors.DarkGray);
+			ShowConsole("  -l  -logfile", console_colors.White);
+			ShowConsole("       Save all info in log file (Param is path to log file. If param is empty, then log file creates in same folder)", console_colors.Gray);
+			ShowConsole("      -logfile=\"C:\\Full path To\\Log_file.log\"", console_colors.DarkGray);
 			ShowConsole("");
-			ShowConsole("  -r -runfile", console_colors.White);
-			ShowConsole("     Path to file (execute a program, vb script or batch file), that need to be executed on event", console_colors.Gray);
-			ShowConsole("     -runfile=\"C:\\Full path To\\Your Script.exe\"", console_colors.DarkGray);
+			ShowConsole("  -r  -runfile", console_colors.White);
+			ShowConsole("      Path to file (execute a program, vb script or batch file), that need to be executed on event", console_colors.Gray);
+			ShowConsole("      -runfile=\"C:\\Full path To\\Your Script.exe\"", console_colors.DarkGray);
 			ShowConsole("");
-			ShowConsole("  -e -events", console_colors.White);
-			ShowConsole("     Set types of events, that should be handled (C - Created, U - Updated, D - Deleted, R - Renamed)", console_colors.Gray);
-			ShowConsole("     -events=CUDR", console_colors.DarkGray);
+			ShowConsole("  -e  -events", console_colors.White);
+			ShowConsole("      Set types of events, that should be handled (C - Created, U - Updated, D - Deleted, R - Renamed)", console_colors.Gray);
+			ShowConsole("      -events=CUDR", console_colors.DarkGray);
+			ShowConsole("");
+			ShowConsole("  -sp -spinner", console_colors.White);
+			ShowConsole("      Spinner type on standby (available options 1-4)", console_colors.Gray);
+			ShowConsole("      -spinner=4", console_colors.DarkGray);
 			ShowConsole("");
 			ShowConsole("");
 			ShowConsole("Additional features:", console_colors.Yellow);
@@ -792,63 +894,4 @@ namespace LEMEX {
 			return value.Length <= lenth ? value : value.Substring(value.Length - lenth);
 		}
 	}
-	/*
-	public class PropertyReader {
-		//simple struct to store the type and name of variables
-		public struct Variable {
-			public string name;
-			public Type type;
-		}
-
-		//for instances of classes that inherit PropertyReader
-		private Variable[] _fields_cache;
-		private Variable[] _props_cache;
-		
-		public Variable[] getFields() {
-			if (_fields_cache == null)
-				_fields_cache = getFields (this.GetType());
-			
-			return _fields_cache;
-		}
-		
-		public Variable[] getProperties() {
-			if (_props_cache == null)
-				_props_cache = getProperties (this.GetType());
-			
-			return _props_cache;
-		}
-
-		//getters and setters for instance values that inherit PropertyReader
-		public object getValue(string name) {
-			return this.GetType().GetProperty(name).GetValue(this,null);
-		}
-		
-		public void setValue(string name, object value) {
-			this.GetType().GetProperty(name).SetValue(this,value,null);
-		}
-
-		//static functions that return all values of a given type
-		public static Variable[] getFields(Type type) {
-			var fieldValues = type.GetFields();
-			var result = new Variable[fieldValues.Length];
-			for (int i = 0; i < fieldValues.Length; i++) {
-				result[i].name = fieldValues[i].Name;
-				result[i].type = fieldValues[i].GetType();
-			}
-			
-			return result;
-		}
-		
-		public static Variable[] getProperties(Type type) {
-			var propertyValues = type.GetProperties();
-			var result = new Variable[propertyValues.Length];
-			for (int i = 0; i < propertyValues.Length; i++) {
-				result[i].name = propertyValues[i].Name;
-				result[i].type = propertyValues[i].GetType();
-			}
-			
-			return result;
-		}
-	}
-	*/
 }
