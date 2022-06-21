@@ -6,8 +6,8 @@ Compilation:
 > C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:exe /out:C:\LEMEX\Watcher\watchcat_v1.3.exe C:\LEMEX\Watcher\watchcat_v1.3.cs /win32icon:C:\LEMEX\Watcher\eyes-on-speaker.ico /reference:C:\LEMEX\Watcher\Newtonsoft.Json.dll
 
 Using example:
-> - watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat"
-> - C:\LEMEX\Watcher\watchcat_v1.3.exe -p="D:\ZoneData_Import\final" -w -c -s -l -f:"*.csv" -r="C:\LEMEX\run_SQL_job\run_SQL_job.bat" -a="/changes:"
+> - watchcat.exe -p="C:\Windows" -w -c -s -l -f:*.csv -r="C:\WatchCat\run_SQL_job.bat" -sp=4
+> - C:\LEMEX\Watcher\watchcat_v1.3.exe -p="D:\ZoneData_Import\final" -w -c -s -l -f:"*.csv" -r="C:\LEMEX\run_SQL_job\run_SQL_job.bat" -a="/changes:" -sp=4
     
 ```
     Available options:
